@@ -11,18 +11,13 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 :root {
-  --bg-0: #08080c;
-  --bg-1: #0e0e15;
-  --bg-2: #14141f;
-  --fg: #f5f5f7;
-  --muted: #8b8b9a;
-  --amber: #fbbf24;
-  --amber-dim: #f59e0b;
-  --cyan: #22d3ee;
-  --green: #10b981;
-  --red: #ef4444;
+  --bg-0: #08080c; --bg-1: #0e0e15; --bg-2: #14141f;
+  --fg: #f5f5f7; --muted: #8b8b9a;
+  --amber: #fbbf24; --amber-dim: #f59e0b;
+  --cyan: #22d3ee; --green: #10b981; --red: #ef4444;
   --border: rgba(251, 191, 36, 0.15);
   --card: rgba(20, 20, 31, 0.55);
 }
@@ -30,10 +25,8 @@
 html, body { margin: 0; padding: 0; }
 body {
   font-family: 'Space Grotesk', sans-serif;
-  background: var(--bg-0);
-  color: var(--fg);
-  min-height: 100vh;
-  overflow-x: hidden;
+  background: var(--bg-0); color: var(--fg);
+  min-height: 100vh; overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 .mono { font-family: 'JetBrains Mono', monospace; }
@@ -65,11 +58,8 @@ body {
 
 .glass {
   background: var(--card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  position: relative;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border); border-radius: 24px; position: relative;
 }
 .glass::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
@@ -79,11 +69,11 @@ body {
 
 .btn-primary {
   background: linear-gradient(135deg, var(--amber), var(--amber-dim));
-  color: #0a0a0f; font-weight: 600;
-  padding: 14px 28px; border-radius: 12px; border: none;
-  cursor: pointer; transition: all 0.2s;
-  font-family: inherit; font-size: 14px;
+  color: #0a0a0f; font-weight: 600; padding: 14px 28px;
+  border-radius: 12px; border: none; cursor: pointer;
+  transition: all 0.2s; font-family: inherit; font-size: 14px;
   letter-spacing: 0.02em; position: relative; overflow: hidden;
+  text-decoration: none; display: inline-block; text-align: center;
 }
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
@@ -91,74 +81,58 @@ body {
 }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--fg); font-weight: 500;
-  padding: 14px 28px; border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer; transition: all 0.2s;
-  font-family: inherit; font-size: 14px;
+  background: rgba(255, 255, 255, 0.04); color: var(--fg);
+  font-weight: 500; padding: 14px 28px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer;
+  transition: all 0.2s; font-family: inherit; font-size: 14px;
 }
 .btn-secondary:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); }
 
 .tab-switch {
   display: flex; gap: 4px; padding: 5px;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.05);
 }
 .tab-btn {
-  flex: 1; padding: 12px 20px;
-  background: transparent; color: var(--muted);
-  border: none; border-radius: 10px;
+  flex: 1; padding: 12px 20px; background: transparent;
+  color: var(--muted); border: none; border-radius: 10px;
   font-weight: 500; cursor: pointer; transition: all 0.25s;
   font-family: inherit; font-size: 14px;
 }
 .tab-btn.active {
   background: linear-gradient(135deg, var(--amber), var(--amber-dim));
-  color: #0a0a0f;
-  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+  color: #0a0a0f; box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
 }
 
 .dropzone {
   border: 2px dashed rgba(251, 191, 36, 0.25);
-  border-radius: 16px; padding: 48px 24px;
-  text-align: center; transition: all 0.25s;
-  cursor: pointer; background: rgba(251, 191, 36, 0.02);
+  border-radius: 16px; padding: 40px 24px;
+  text-align: center; transition: all 0.25s; cursor: pointer;
+  background: rgba(251, 191, 36, 0.02);
 }
 .dropzone:hover, .dropzone.dragging {
-  border-color: var(--amber);
-  background: rgba(251, 191, 36, 0.05);
+  border-color: var(--amber); background: rgba(251, 191, 36, 0.05);
   transform: translateY(-2px);
 }
 
 .status-pill {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 7px 14px; border-radius: 999px;
-  font-size: 12px; font-weight: 500;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 7px 14px; border-radius: 999px; font-size: 12px;
+  font-weight: 500; background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .status-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--muted); transition: all 0.3s;
 }
-.status-dot.active {
-  background: var(--amber);
-  box-shadow: 0 0 12px var(--amber);
-  animation: pulse 1.5s ease-in-out infinite;
-}
+.status-dot.active { background: var(--amber); box-shadow: 0 0 12px var(--amber); animation: pulse 1.5s ease-in-out infinite; }
 .status-dot.success { background: var(--green); box-shadow: 0 0 12px var(--green); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-.progress-track {
-  height: 6px; background: rgba(255, 255, 255, 0.06);
-  border-radius: 999px; overflow: hidden;
-}
+.progress-track { height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 999px; overflow: hidden; }
 .progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--amber), var(--cyan));
-  border-radius: 999px; transition: width 0.2s;
-  position: relative; overflow: hidden;
+  height: 100%; background: linear-gradient(90deg, var(--amber), var(--cyan));
+  border-radius: 999px; transition: width 0.2s; position: relative; overflow: hidden;
 }
 .progress-fill::after {
   content: ''; position: absolute; inset: 0;
@@ -168,40 +142,35 @@ body {
 @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
 .qr-container {
-  background: white; padding: 18px;
-  border-radius: 16px; display: inline-block;
-  position: relative;
+  background: white; padding: 18px; border-radius: 16px;
+  display: inline-block; position: relative;
   box-shadow: 0 0 40px rgba(251, 191, 36, 0.2);
 }
 .qr-container::before, .qr-container::after {
-  content: ''; position: absolute;
-  width: 28px; height: 28px;
+  content: ''; position: absolute; width: 28px; height: 28px;
   border: 3px solid var(--amber); pointer-events: none;
 }
-.qr-container::before {
-  top: -3px; left: -3px;
-  border-right: none; border-bottom: none;
-  border-radius: 12px 0 0 0;
-}
-.qr-container::after {
-  bottom: -3px; right: -3px;
-  border-left: none; border-top: none;
-  border-radius: 0 0 12px 0;
+.qr-container::before { top: -3px; left: -3px; border-right: none; border-bottom: none; border-radius: 12px 0 0 0; }
+.qr-container::after { bottom: -3px; right: -3px; border-left: none; border-top: none; border-radius: 0 0 12px 0; }
+
+.qr-badge {
+  position: absolute; top: -12px; right: -12px;
+  background: linear-gradient(135deg, var(--amber), var(--amber-dim));
+  color: #0a0a0f; font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
 }
 
 .scanner-frame {
   position: relative; width: 100%; max-width: 300px;
-  aspect-ratio: 1; margin: 0 auto;
-  border-radius: 16px; overflow: hidden;
-  background: #000; box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  aspect-ratio: 1; margin: 0 auto; border-radius: 16px;
+  overflow: hidden; background: #000;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
 }
 .scanner-frame video { width: 100%; height: 100%; object-fit: cover; }
 .scanner-overlay { position: absolute; inset: 0; pointer-events: none; }
-.scanner-corner {
-  position: absolute; width: 32px; height: 32px;
-  border: 3px solid var(--amber);
-  filter: drop-shadow(0 0 6px var(--amber));
-}
+.scanner-corner { position: absolute; width: 32px; height: 32px; border: 3px solid var(--amber); filter: drop-shadow(0 0 6px var(--amber)); }
 .scanner-corner.tl { top: 16px; left: 16px; border-right: none; border-bottom: none; border-radius: 10px 0 0 0; }
 .scanner-corner.tr { top: 16px; right: 16px; border-left: none; border-bottom: none; border-radius: 0 10px 0 0; }
 .scanner-corner.bl { bottom: 16px; left: 16px; border-right: none; border-top: none; border-radius: 0 0 0 10px; }
@@ -214,26 +183,17 @@ body {
 }
 @keyframes scan { 0%,100% { top: 16px; } 50% { top: calc(100% - 18px); } }
 
-.step {
-  display: flex; align-items: center; gap: 12px;
-  padding: 8px 0; opacity: 0.35; transition: opacity 0.3s;
-}
+.step { display: flex; align-items: center; gap: 12px; padding: 8px 0; opacity: 0.35; transition: opacity 0.3s; }
 .step.active { opacity: 1; }
 .step.done { opacity: 0.65; }
 .step-num {
   width: 28px; height: 28px; border-radius: 50%;
   background: rgba(255,255,255,0.05);
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700;
-  border: 1px solid rgba(255,255,255,0.1);
-  flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
-  transition: all 0.3s;
+  font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0; font-family: 'JetBrains Mono', monospace; transition: all 0.3s;
 }
-.step.active .step-num {
-  background: var(--amber); color: #0a0a0f;
-  border-color: var(--amber);
-  box-shadow: 0 0 14px rgba(251, 191, 36, 0.5);
-}
+.step.active .step-num { background: var(--amber); color: #0a0a0f; border-color: var(--amber); box-shadow: 0 0 14px rgba(251, 191, 36, 0.5); }
 .step.done .step-num { background: var(--green); color: #fff; border-color: var(--green); }
 .step-text { font-size: 14px; }
 
@@ -256,60 +216,54 @@ body {
 .logo-mark {
   width: 42px; height: 42px;
   background: linear-gradient(135deg, var(--amber), var(--cyan));
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  position: relative; overflow: hidden;
+  border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; position: relative; overflow: hidden;
   box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
 }
-.logo-mark::before {
-  content: ''; position: absolute; inset: 2px;
-  background: var(--bg-0); border-radius: 10px;
-}
+.logo-mark::before { content: ''; position: absolute; inset: 2px; background: var(--bg-0); border-radius: 10px; }
 .logo-mark svg { position: relative; z-index: 1; }
 
-.toggle-track {
-  width: 44px; height: 24px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 999px; position: relative;
-  transition: background 0.2s;
-}
-.toggle-thumb {
-  position: absolute; top: 2px; left: 2px;
-  width: 20px; height: 20px; background: white;
-  border-radius: 50%; transition: transform 0.2s;
-}
+.toggle-track { width: 44px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 999px; position: relative; transition: background 0.2s; }
+.toggle-thumb { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.2s; }
 input:checked + .toggle-track { background: var(--amber); }
 input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
 
-.gradient-text {
-  background: linear-gradient(135deg, var(--amber) 0%, #fde047 50%, var(--cyan) 100%);
-  -webkit-background-clip: text; background-clip: text;
-  color: transparent;
-}
+.gradient-text { background: linear-gradient(135deg, var(--amber) 0%, #fde047 50%, var(--cyan) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 .file-card {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px; border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: all 0.2s;
+  display: flex; align-items: center; gap: 12px; padding: 12px;
+  border-radius: 12px; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s;
 }
 .file-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(251, 191, 36, 0.2); }
+
+.file-prog-item {
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: all 0.2s;
+}
+.file-prog-item.active { border-color: rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.03); }
+.file-prog-item.done { border-color: rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.03); }
+
+.dl-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--amber); text-decoration: none;
+  padding: 4px 10px; border-radius: 6px;
+  background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.15);
+  transition: all 0.2s;
+}
+.dl-link:hover { background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.3); }
 
 @media (max-width: 768px) {
   .tab-btn { padding: 10px 12px; font-size: 13px; }
   h1 { font-size: 2.5rem !important; }
 }
-
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-1); }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
-@keyframes receiveGlow {
-  0%,100% { box-shadow: 0 0 0 rgba(34, 211, 238, 0); }
-  50% { box-shadow: 0 0 30px rgba(34, 211, 238, 0.25); }
-}
+@keyframes receiveGlow { 0%,100% { box-shadow: 0 0 0 rgba(34, 211, 238, 0); } 50% { box-shadow: 0 0 30px rgba(34, 211, 238, 0.25); } }
 .receiving { animation: receiveGlow 1.5s ease-in-out infinite; }
 </style>
 </head>
@@ -324,12 +278,7 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
   <div class="flex items-center gap-3">
     <div class="logo-mark">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <defs>
-          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-            <stop stop-color="#fbbf24"/>
-            <stop offset="1" stop-color="#22d3ee"/>
-          </linearGradient>
-        </defs>
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fbbf24"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
         <path d="M5 12h4l2-7 2 14 2-7h4" stroke="url(#lg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
@@ -345,7 +294,7 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
 </header>
 
 <main class="max-w-6xl mx-auto px-6 pb-12">
-  <section class="text-center py-12">
+  <section class="text-center py-10">
     <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] mono text-amber-300 border border-amber-500/25 bg-amber-500/5 mb-6 tracking-widest">
       <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
       NO INTERNET · NO SERVER · NO CLOUD
@@ -355,7 +304,7 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
       <span class="gradient-text">tanpa internet sama sekali</span>
     </h1>
     <p class="text-gray-400 max-w-xl mx-auto leading-relaxed">
-      Aktifkan hotspot di HP A, scan QR dari HP B — file terkirim langsung antar perangkat dengan kecepatan penuh jaringan lokal. Enkripsi end-to-end bawaan WebRTC.
+      Aktifkan hotspot di HP A, scan QR dari HP B — file terkirim langsung antar perangkat dengan kecepatan penuh jaringan lokal. Multi-file, enkripsi end-to-end.
     </p>
   </section>
 
@@ -364,23 +313,25 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
     <button class="tab-btn" data-tab="receive">TERIMA FILE</button>
   </div>
 
+  <!-- SEND PANEL -->
   <section id="sendPanel" class="grid md:grid-cols-2 gap-5">
-    <div class="glass p-6 space-y-5">
+    <div class="glass p-6 space-y-4">
       <div>
         <div class="text-xs text-gray-500 mb-1.5 mono tracking-widest">MODE · SENDER</div>
         <h2 class="text-xl font-semibold">Pilih file untuk dikirim</h2>
       </div>
 
       <div class="dropzone" id="dropzone">
-        <input type="file" id="fileInput" class="hidden">
+        <input type="file" id="fileInput" class="hidden" multiple>
         <svg class="mx-auto mb-3 text-amber-400" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
         </svg>
         <div class="font-medium">Ketuk atau seret file ke sini</div>
-        <div class="text-xs text-gray-500 mt-1.5 mono">FORMAT APAPUN · MAX 100MB</div>
+        <div class="text-xs text-gray-500 mt-1.5 mono">SUPPORT MULTI-FILE · MAX 100MB / FILE</div>
       </div>
 
       <div id="fileList" class="space-y-2 hidden"></div>
+      <button id="addMoreBtn" class="btn-secondary w-full text-sm hidden">+ Tambah File Lain</button>
 
       <div class="pt-2">
         <div class="text-[10px] text-gray-500 mb-2 mono tracking-widest">ALUR KERJA</div>
@@ -395,18 +346,16 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
     <div class="glass p-6 flex flex-col items-center justify-center min-h-[520px]">
       <div id="sendIdle" class="text-center text-gray-500 fade-in">
         <svg class="mx-auto mb-4 opacity-30" width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 18h3v3M18 14h3"/>
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 18h3v3M18 14h3"/>
         </svg>
         <div class="text-sm max-w-xs mx-auto">Pilih file di panel kiri untuk mulai membuat QR Code koneksi.</div>
       </div>
 
       <div id="sendQR" class="hidden flex-col items-center fade-in w-full">
-        <div class="text-xs text-amber-300 mb-4 mono tracking-widest">▼ SCAN QR INI DARI HP B ▼</div>
-        <div class="qr-container"><canvas id="qrCanvas"></canvas></div>
-        <div class="text-xs text-gray-500 mt-5 text-center max-w-xs leading-relaxed">
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest text-center">▼ SCAN QR INI DARI HP B ▼</div>
+        <div class="qr-container"><canvas id="qrCanvas"></canvas><div class="qr-badge hidden" id="qrChunkBadge">1/3</div></div>
+        <div id="qrHint" class="text-xs text-gray-500 mt-5 text-center max-w-xs leading-relaxed">
           Buka aplikasi <span class="text-amber-300">BEAM</span> di HP B, pilih <span class="text-amber-300">Terima File</span>, lalu arahkan kamera ke QR di atas.
         </div>
         <button class="btn-primary mt-5 text-sm" id="scanAnswerBtn">HP B sudah memindai → Lanjut</button>
@@ -427,10 +376,17 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
 
       <div id="sendProgress" class="hidden w-full fade-in">
         <div class="text-xs text-amber-300 mb-4 mono tracking-widest text-center">MENGIRIM FILE...</div>
-        <div id="sendingFileInfo" class="text-sm mb-3 text-center truncate"></div>
-        <div class="progress-track"><div class="progress-fill" id="sendProgressFill" style="width: 0%"></div></div>
-        <div class="flex justify-between text-xs text-gray-500 mt-2 mono">
-          <span id="sendBytesSent">0 B</span><span id="sendPercent">0%</span>
+        <div id="sendFileList" class="space-y-2 mb-4 max-h-56 overflow-y-auto"></div>
+        <div class="pt-3 border-t border-white/5">
+          <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+            <span>Overall Progress</span>
+            <span id="sendOverallPct" class="mono">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="sendOverallFill" style="width: 0%"></div></div>
+          <div class="flex justify-between text-xs text-gray-500 mt-1.5 mono">
+            <span id="sendOverallBytes">0 B / 0 B</span>
+            <span id="sendFileCount">0 / 0 files</span>
+          </div>
         </div>
         <div class="text-center text-[11px] text-gray-600 mt-4 mono">E2E ENCRYPTED · DIRECT P2P</div>
       </div>
@@ -440,12 +396,13 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
           <svg class="text-green-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
         <div class="text-lg font-semibold">Transfer Selesai</div>
-        <div class="text-sm text-gray-400 mt-1">File berhasil dikirim ke perangkat tujuan.</div>
+        <div id="sendDoneSummary" class="text-sm text-gray-400 mt-1"></div>
         <button class="btn-secondary mt-5 text-sm" id="sendAnother">Kirim File Lain</button>
       </div>
     </div>
   </section>
 
+  <!-- RECEIVE PANEL -->
   <section id="receivePanel" class="hidden grid md:grid-cols-2 gap-5">
     <div class="glass p-6 flex flex-col items-center justify-center min-h-[520px]">
       <div id="recvIdle" class="text-center fade-in">
@@ -458,7 +415,7 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
       </div>
 
       <div id="recvScanner" class="hidden flex-col items-center w-full fade-in">
-        <div class="text-xs text-amber-300 mb-4 mono tracking-widest">ARAHKAN KE QR CODE HP A</div>
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest text-center">ARAHKAN KE QR CODE HP A</div>
         <div class="scanner-frame">
           <video id="recvVideo" playsinline muted></video>
           <div class="scanner-overlay">
@@ -467,35 +424,44 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
             <div class="scan-line"></div>
           </div>
         </div>
+        <div id="recvChunkProgress" class="text-xs text-cyan-400 mono mt-3 hidden"></div>
         <button class="btn-secondary mt-5 text-sm" id="cancelRecvScan">Batal</button>
       </div>
 
       <div id="recvAnswerQR" class="hidden flex-col items-center fade-in">
         <div class="text-xs text-amber-300 mb-4 mono tracking-widest">▼ SCAN QR INI DI HP A ▼</div>
-        <div class="qr-container"><canvas id="answerQrCanvas"></canvas></div>
-        <div class="text-xs text-gray-500 mt-5 text-center max-w-xs leading-relaxed">
+        <div class="qr-container"><canvas id="answerQrCanvas"></canvas><div class="qr-badge hidden" id="ansChunkBadge">1/3</div></div>
+        <div id="ansHint" class="text-xs text-gray-500 mt-5 text-center max-w-xs leading-relaxed">
           Kembali ke HP A, tekan <span class="text-amber-300">"HP B sudah memindai → Lanjut"</span>, lalu arahkan kamera ke QR ini.
         </div>
       </div>
 
       <div id="recvProgress" class="hidden w-full fade-in receiving">
         <div class="text-xs text-amber-300 mb-4 mono tracking-widest text-center">MENERIMA FILE...</div>
-        <div id="recvFileInfo" class="text-sm mb-3 text-center truncate"></div>
-        <div class="progress-track"><div class="progress-fill" id="recvProgressFill" style="width: 0%"></div></div>
-        <div class="flex justify-between text-xs text-gray-500 mt-2 mono">
-          <span id="recvBytesRecv">0 B</span><span id="recvPercent">0%</span>
+        <div id="recvFileList" class="space-y-2 mb-4 max-h-56 overflow-y-auto"></div>
+        <div class="pt-3 border-t border-white/5">
+          <div class="flex justify-between text-xs text-gray-400 mb-1.5">
+            <span>Overall Progress</span>
+            <span id="recvOverallPct" class="mono">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="recvOverallFill" style="width: 0%"></div></div>
+          <div class="flex justify-between text-xs text-gray-500 mt-1.5 mono">
+            <span id="recvOverallBytes">0 B / 0 B</span>
+            <span id="recvFileCount">0 / 0 files</span>
+          </div>
         </div>
         <div class="text-center text-[11px] text-gray-600 mt-4 mono">E2E ENCRYPTED · DIRECT P2P</div>
       </div>
 
-      <div id="recvDone" class="hidden text-center fade-in">
+      <div id="recvDone" class="hidden text-center fade-in w-full">
         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
           <svg class="text-green-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
-        <div class="text-lg font-semibold">File Diterima</div>
-        <div id="recvFileName" class="text-sm text-gray-400 mt-1 mb-5 truncate max-w-xs mx-auto"></div>
-        <a id="downloadLink" class="btn-primary inline-block no-underline" download>Download File</a>
-        <button class="btn-secondary mt-3 text-sm block w-full" id="recvAnother">Terima File Lain</button>
+        <div class="text-lg font-semibold">Semua File Diterima</div>
+        <div id="recvFileSummary" class="text-sm text-gray-400 mt-1 mb-4"></div>
+        <div id="recvDoneList" class="space-y-2 mb-4 max-h-48 overflow-y-auto text-left"></div>
+        <button class="btn-primary text-sm w-full" id="downloadAllBtn">Download All (ZIP)</button>
+        <button class="btn-secondary mt-2 text-sm w-full" id="recvAnother">Terima File Lain</button>
       </div>
     </div>
 
@@ -543,7 +509,7 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
   </div>
 
   <footer class="mt-12 text-center text-[10px] text-gray-600 mono tracking-widest">
-    BEAM v1.0 · POWERED BY WEBRTC + QR · NO SERVER · NO CLOUD · NO TRACKING
+    BEAM v2.0 · POWERED BY WEBRTC + QR · NO SERVER · NO CLOUD · NO TRACKING
   </footer>
 </main>
 
@@ -554,13 +520,18 @@ input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
 let mode = 'send';
 let demoMode = false;
 let pc = null, dc = null;
-let selectedFile = null;
-let recvBuffer = [], recvMeta = null, recvSize = 0;
+let selectedFiles = [];
+let sendProgress = [];
+let recvFiles = [];
+let activeRecvIndex = -1;
 let sendVideoStream = null, recvVideoStream = null;
 let sendScanRunning = false, recvScanRunning = false;
 let demoChannel = null;
-let lastOfferCompressed = null;
 let offerRetryTimer = null;
+let qrChunkInterval = null;
+let ansChunkInterval = null;
+let recvChunks = {};
+let recvTotalChunks = 0;
 
 const $ = id => document.getElementById(id);
 
@@ -596,22 +567,132 @@ function formatBytes(b) {
   return (b / 1024 / 1024 / 1024).toFixed(2) + ' GB';
 }
 
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = {
+    jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️',
+    mp4: '🎬', avi: '🎬', mov: '🎬', mkv: '🎬', webm: '🎬',
+    mp3: '🎵', wav: '🎵', flac: '🎵', ogg: '🎵',
+    pdf: '📄', doc: '📄', docx: '📄', txt: '📄', xls: '📊', xlsx: '📊', ppt: '📊', pptx: '📊',
+    zip: '📦', rar: '📦', '7z': '📦', tar: '📦', gz: '📦',
+    apk: '📱', exe: '⚙️', dmg: '⚙️',
+  };
+  return icons[ext] || '📎';
+}
+
 function showSendState(state) {
   ['sendIdle','sendQR','sendScanAnswer','sendProgress','sendDone'].forEach(id => {
-    $(id).classList.add('hidden');
-    $(id).classList.remove('flex');
+    $(id).classList.add('hidden'); $(id).classList.remove('flex');
   });
-  $(state).classList.remove('hidden');
-  $(state).classList.add('flex');
+  $(state).classList.remove('hidden'); $(state).classList.add('flex');
 }
 
 function showRecvState(state) {
   ['recvIdle','recvScanner','recvAnswerQR','recvProgress','recvDone'].forEach(id => {
-    $(id).classList.add('hidden');
-    $(id).classList.remove('flex');
+    $(id).classList.add('hidden'); $(id).classList.remove('flex');
   });
-  $(state).classList.remove('hidden');
-  $(state).classList.add('flex');
+  $(state).classList.remove('hidden'); $(state).classList.add('flex');
+}
+
+// === SDP COMPACTION (fix QR too large) ===
+function compactDesc(desc) {
+  const lines = desc.sdp.split('\r\n');
+  const candidates = [];
+  const seenIps = new Set();
+  const filtered = [];
+
+  for (const line of lines) {
+    if (line.startsWith('a=candidate:')) {
+      const rest = line.substring(12);
+      if (rest.includes(' typ host')) {
+        const parts = rest.split(' ');
+        const ip = parts[4];
+        if (ip && !seenIps.has(ip)) {
+          seenIps.add(ip);
+          candidates.push(rest);
+        }
+      }
+    } else if (line.startsWith('a=end-of-candidates') ||
+               line.startsWith('a=extmap-allow-mixed') ||
+               line.startsWith('a=msid-semantic')) {
+      // skip unnecessary lines
+    } else {
+      filtered.push(line);
+    }
+  }
+  // Limit to 2 host candidates max
+  return {
+    t: desc.type === 'offer' ? 'o' : 'a',
+    s: filtered.join('\r\n'),
+    c: candidates.slice(0, 2)
+  };
+}
+
+function expandDesc(obj) {
+  let sdp = obj.s;
+  if (obj.c && obj.c.length > 0) {
+    sdp += '\r\n' + obj.c.map(c => 'a=candidate:' + c).join('\r\n');
+    sdp += '\r\na=end-of-candidates';
+  }
+  return { type: obj.t === 'o' ? 'offer' : 'answer', sdp };
+}
+
+// === CHUNKED QR (fallback for large data) ===
+function chunkString(str, size) {
+  const chunks = [];
+  for (let i = 0; i < str.length; i += size) {
+    chunks.push(str.substring(i, i + size));
+  }
+  return chunks;
+}
+
+async function generateSignalQR(canvas, desc, badgeId) {
+  const compact = compactDesc(desc);
+  const json = JSON.stringify(compact);
+  const compressed = LZString.compress(json);
+  const badge = $(badgeId);
+
+  // Try single QR if small enough
+  if (compressed.length <= 900) {
+    badge.classList.add('hidden');
+    await QRCode.toCanvas(canvas, compressed, {
+      width: 256, margin: 1, errorCorrectionLevel: 'L'
+    });
+    return { chunked: false, compressed };
+  }
+
+  // Fallback: chunked QR
+  const chunkSize = 500;
+  const chunks = chunkString(compressed, chunkSize);
+  badge.classList.remove('hidden');
+
+  let currentIdx = 0;
+
+  const showCurrent = async () => {
+    const data = JSON.stringify({ i: currentIdx, n: chunks.length, d: chunks[currentIdx] });
+    badge.textContent = (currentIdx + 1) + '/' + chunks.length;
+    try {
+      await QRCode.toCanvas(canvas, data, {
+        width: 256, margin: 1, errorCorrectionLevel: 'L'
+      });
+    } catch (e) {
+      console.error('QR gen error', e);
+    }
+  };
+
+  await showCurrent();
+
+  // Auto-advance every 2 seconds
+  const interval = setInterval(async () => {
+    currentIdx = (currentIdx + 1) % chunks.length;
+    await showCurrent();
+  }, 2000);
+
+  return { chunked: true, compressed, chunks, interval };
+}
+
+function stopQRInterval(interval) {
+  if (interval) clearInterval(interval);
 }
 
 // === TABS ===
@@ -626,7 +707,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// === FILE PICKER ===
+// === MULTI-FILE PICKER ===
 const dropzone = $('dropzone');
 const fileInput = $('fileInput');
 
@@ -636,55 +717,82 @@ dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging
 dropzone.addEventListener('drop', e => {
   e.preventDefault();
   dropzone.classList.remove('dragging');
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
 });
-fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFiles(e.target.files); });
 
-function handleFile(file) {
-  if (file.size > 100 * 1024 * 1024) {
-    showToast('File terlalu besar (max 100MB)', 'error');
-    return;
+ $('addMoreBtn').addEventListener('click', () => fileInput.click());
+
+function handleFiles(files) {
+  for (const file of files) {
+    if (file.size > 100 * 1024 * 1024) {
+      showToast(`"${file.name}" terlalu besar (max 100MB)`, 'error');
+      continue;
+    }
+    selectedFiles.push(file);
   }
-  selectedFile = file;
+  renderFileList();
+
+  if (selectedFiles.length > 0) {
+    dropzone.classList.add('hidden');
+    $('fileList').classList.remove('hidden');
+    $('addMoreBtn').classList.remove('hidden');
+    setStep(2);
+    startSendingFlow();
+  }
+}
+
+function renderFileList() {
   const list = $('fileList');
   list.innerHTML = '';
-  list.classList.remove('hidden');
-  dropzone.classList.add('hidden');
+  const totalSize = selectedFiles.reduce((s, f) => s + f.size, 0);
 
-  const item = document.createElement('div');
-  item.className = 'file-card';
-  item.innerHTML = `
-    <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500/20 to-cyan-500/20 border border-amber-500/20 flex items-center justify-center text-amber-300 flex-shrink-0">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-    </div>
-    <div class="flex-1 min-w-0">
-      <div class="text-sm font-medium truncate">${file.name}</div>
-      <div class="text-xs text-gray-500 mono mt-0.5">${formatBytes(file.size)}</div>
-    </div>
-    <button class="text-gray-500 hover:text-red-400 transition-colors p-1" id="removeFileBtn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-    </button>
-  `;
-  item.querySelector('#removeFileBtn').onclick = () => {
-    selectedFile = null;
-    list.classList.add('hidden');
-    list.innerHTML = '';
-    dropzone.classList.remove('hidden');
-    fileInput.value = '';
-    setStep(0);
-    showSendState('sendIdle');
-    if (pc) { try { pc.close(); } catch(e){} pc = null; }
-    setStatus('STANDBY');
-  };
-  list.appendChild(item);
+  selectedFiles.forEach((file, idx) => {
+    const item = document.createElement('div');
+    item.className = 'file-card';
+    item.innerHTML = `
+      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-cyan-500/20 border border-amber-500/20 flex items-center justify-center text-lg flex-shrink-0">
+        ${getFileIcon(file.name)}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium truncate">${file.name}</div>
+        <div class="text-xs text-gray-500 mono mt-0.5">${formatBytes(file.size)}</div>
+      </div>
+      <button class="text-gray-500 hover:text-red-400 transition-colors p-1" data-remove="${idx}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    `;
+    item.querySelector('[data-remove]').onclick = () => {
+      selectedFiles.splice(idx, 1);
+      if (selectedFiles.length === 0) {
+        list.classList.add('hidden');
+        $('addMoreBtn').classList.add('hidden');
+        dropzone.classList.remove('hidden');
+        fileInput.value = '';
+        setStep(0);
+        showSendState('sendIdle');
+        if (pc) { try { pc.close(); } catch(e){} pc = null; }
+        setStatus('STANDBY');
+      } else {
+        renderFileList();
+      }
+    };
+    list.appendChild(item);
+  });
 
-  setStep(2);
-  startSendingFlow();
+  if (selectedFiles.length > 0) {
+    const summary = document.createElement('div');
+    summary.className = 'text-xs text-gray-500 mono pt-1 text-center';
+    summary.textContent = `${selectedFiles.length} file · ${formatBytes(totalSize)} total`;
+    list.appendChild(summary);
+  }
+
+  fileInput.value = '';
 }
 
 // === SEND FLOW ===
 async function startSendingFlow() {
-  if (!selectedFile) return;
+  if (selectedFiles.length === 0) return;
   setStep(3);
   setStatus('Creating offer...', 'active');
   showSendState('sendQR');
@@ -700,24 +808,18 @@ async function startSendingFlow() {
   pc.onicegatheringstatechange = async () => {
     if (pc.iceGatheringState === 'complete' && !iceComplete) {
       iceComplete = true;
-      const sdp = JSON.stringify(pc.localDescription);
-      const compressed = LZString.compress(sdp);
-      lastOfferCompressed = compressed;
-      try {
-        await QRCode.toCanvas($('qrCanvas'), compressed, {
-          width: 256, margin: 1, errorCorrectionLevel: 'L'
-        });
-      } catch (e) {
-        showToast('QR terlalu besar, coba file lebih kecil', 'error');
-        return;
+      const result = await generateSignalQR($('qrCanvas'), pc.localDescription, 'qrChunkBadge');
+      if (result.chunked) {
+        qrChunkInterval = result.interval;
+        $('qrHint').innerHTML = `<span class="text-cyan-400">QR berurutan ${result.chunks.length} bagian.</span> Scan semua dari HP B — auto-advance setiap 2 detik.`;
       }
+
       if (demoMode && demoChannel) {
-        demoChannel.postMessage({ type: 'offer', sdp: compressed });
-        // Retry sending offer in case receiver isn't ready yet
+        demoChannel.postMessage({ type: 'offer', desc: compactDesc(pc.localDescription) });
         if (offerRetryTimer) clearInterval(offerRetryTimer);
         offerRetryTimer = setInterval(() => {
           if (pc && !pc.currentRemoteDescription && pc.connectionState !== 'connected') {
-            demoChannel.postMessage({ type: 'offer', sdp: compressed });
+            demoChannel.postMessage({ type: 'offer', desc: compactDesc(pc.localDescription) });
           } else {
             clearInterval(offerRetryTimer);
             offerRetryTimer = null;
@@ -734,6 +836,7 @@ async function startSendingFlow() {
     if (state === 'connected') {
       setStatus('Connected', 'success');
       if (offerRetryTimer) { clearInterval(offerRetryTimer); offerRetryTimer = null; }
+      if (qrChunkInterval) { clearInterval(qrChunkInterval); qrChunkInterval = null; }
     }
     if (state === 'disconnected' || state === 'failed') {
       showToast('Koneksi terputus', 'error');
@@ -751,14 +854,13 @@ async function startSendingFlow() {
     showToast('Demo mode: menunggu answer otomatis...', '');
     return;
   }
+  if (qrChunkInterval) { clearInterval(qrChunkInterval); qrChunkInterval = null; }
   showSendState('sendScanAnswer');
   setStep(4);
   setStatus('Scanning...', 'active');
 
   try {
-    sendVideoStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' }
-    });
+    sendVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     $('sendVideo').srcObject = sendVideoStream;
     await $('sendVideo').play();
     sendScanRunning = true;
@@ -770,26 +872,42 @@ async function startSendingFlow() {
 
 async function handleScannedAnswer(text) {
   if (!sendScanRunning) return;
-  sendScanRunning = false;
-  stopSendVideo();
-
   try {
-    const decompressed = LZString.decompress(text);
-    if (!decompressed) throw new Error('invalid data');
-    const desc = JSON.parse(decompressed);
+    let desc;
+    // Check if chunked
+    if (text.startsWith('{')) {
+      const parsed = JSON.parse(text);
+      if (parsed.i !== undefined && parsed.n !== undefined && parsed.d !== undefined) {
+        // It's a chunk - but on answer side, usually fits in one QR
+        // For simplicity, handle single-chunk answer
+        if (parsed.n === 1) {
+          const json = LZString.decompress(parsed.d);
+          desc = expandDesc(JSON.parse(json));
+        } else {
+          showToast('Answer QR chunked - not expected', 'error');
+          return;
+        }
+      } else {
+        // Single compressed QR
+        const json = LZString.decompress(text);
+        desc = expandDesc(JSON.parse(json));
+      }
+    } else {
+      const json = LZString.decompress(text);
+      desc = expandDesc(JSON.parse(json));
+    }
+
     if (desc.type !== 'answer') {
       showToast('QR tidak valid (bukan answer)', 'error');
-      sendScanRunning = true;
-      scanLoop('sendVideo', handleScannedAnswer);
       return;
     }
+    sendScanRunning = false;
+    stopSendVideo();
     await pc.setRemoteDescription(desc);
     $('sendScanAnswer').classList.add('hidden');
     $('sendScanAnswer').classList.remove('flex');
   } catch (e) {
     showToast('Gagal membaca QR: ' + e.message, 'error');
-    sendScanRunning = true;
-    scanLoop('sendVideo', handleScannedAnswer);
   }
 }
 
@@ -817,12 +935,12 @@ function stopSendVideo() {
   setStatus('Scanning...', 'active');
 
   try {
-    recvVideoStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' }
-    });
+    recvVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     $('recvVideo').srcObject = recvVideoStream;
     await $('recvVideo').play();
     recvScanRunning = true;
+    recvChunks = {};
+    recvTotalChunks = 0;
     scanLoop('recvVideo', handleScannedOffer);
   } catch (e) {
     showToast('Tidak bisa akses kamera: ' + e.message, 'error');
@@ -834,6 +952,7 @@ function stopSendVideo() {
   stopRecvVideo();
   showRecvState('recvIdle');
   setStatus('STANDBY');
+  $('recvChunkProgress').classList.add('hidden');
 };
 
 function stopRecvVideo() {
@@ -846,19 +965,59 @@ function stopRecvVideo() {
 async function handleScannedOffer(text) {
   if (!recvScanRunning) return;
   try {
-    const decompressed = LZString.decompress(text);
-    if (!decompressed) throw new Error('invalid');
-    const offer = JSON.parse(decompressed);
+    let compact;
+
+    // Check if it's a chunk
+    if (text.startsWith('{')) {
+      const parsed = JSON.parse(text);
+      if (parsed.i !== undefined && parsed.n !== undefined && parsed.d !== undefined) {
+        // Chunked QR
+        recvChunks[parsed.i] = parsed.d;
+        recvTotalChunks = parsed.n;
+        const received = Object.keys(recvChunks).length;
+
+        if ($('recvChunkProgress')) {
+          $('recvChunkProgress').textContent = `Menerima data... ${received}/${recvTotalChunks} bagian`;
+          $('recvChunkProgress').classList.remove('hidden');
+        }
+
+        if (received < recvTotalChunks) {
+          return; // Need more chunks
+        }
+
+        // All chunks received - reassemble
+        let full = '';
+        for (let i = 0; i < recvTotalChunks; i++) {
+          full += recvChunks[i];
+        }
+        recvChunks = {};
+        recvTotalChunks = 0;
+        $('recvChunkProgress').classList.add('hidden');
+
+        const json = LZString.decompress(full);
+        compact = JSON.parse(json);
+      } else {
+        // Single compressed QR (not chunked)
+        const json = LZString.decompress(text);
+        compact = JSON.parse(json);
+      }
+    } else {
+      const json = LZString.decompress(text);
+      compact = JSON.parse(json);
+    }
+
+    const offer = expandDesc(compact);
     if (offer.type !== 'offer') {
       showToast('QR tidak valid (bukan offer)', 'error');
       return;
     }
+
     recvScanRunning = false;
     stopRecvVideo();
     await processOffer(offer);
   } catch (e) {
-    showToast('Gagal memproses QR: ' + e.message, 'error');
-    recvScanRunning = true;
+    console.error('scan error', e);
+    // Don't show error for partial chunks
   }
 }
 
@@ -883,6 +1042,7 @@ async function processOffer(offer) {
       setStatus('Connected', 'success');
       $('recvP2PStatus').textContent = 'Connected';
       $('recvP2PStatus').className = 'text-green-400 mono text-xs';
+      if (ansChunkInterval) { clearInterval(ansChunkInterval); ansChunkInterval = null; }
     }
     if (state === 'disconnected' || state === 'failed') {
       showToast('Koneksi terputus', 'error');
@@ -897,19 +1057,18 @@ async function processOffer(offer) {
   await pc.setLocalDescription(answer);
 
   let iceComplete = false;
-  pc.onicegatheringstatechange = () => {
+  pc.onicegatheringstatechange = async () => {
     if (pc.iceGatheringState === 'complete' && !iceComplete) {
       iceComplete = true;
-      const sdp = JSON.stringify(pc.localDescription);
-      const compressed = LZString.compress(sdp);
+      const result = await generateSignalQR($('answerQrCanvas'), pc.localDescription, 'ansChunkBadge');
+      if (result.chunked) {
+        ansChunkInterval = result.interval;
+        $('ansHint').innerHTML = `<span class="text-cyan-400">QR berurutan ${result.chunks.length} bagian.</span> Scan semua dari HP A — auto-advance setiap 2 detik.`;
+      }
       showRecvState('recvAnswerQR');
-      QRCode.toCanvas($('answerQrCanvas'), compressed, {
-        width: 256, margin: 1, errorCorrectionLevel: 'L'
-      }, err => {
-        if (err) showToast('QR terlalu besar', 'error');
-      });
+
       if (demoMode && demoChannel) {
-        demoChannel.postMessage({ type: 'answer', sdp: compressed });
+        demoChannel.postMessage({ type: 'answer', desc: compactDesc(pc.localDescription) });
       }
       setStatus('Waiting for sender to scan...', 'active');
     }
@@ -920,8 +1079,8 @@ async function processOffer(offer) {
 function setupDataChannel(channel) {
   channel.onopen = () => {
     setStatus('Connected', 'success');
-    if (mode === 'send' && selectedFile) {
-      startSendingFile();
+    if (mode === 'send' && selectedFiles.length > 0) {
+      startSendingFiles();
     }
   };
 
@@ -929,25 +1088,40 @@ function setupDataChannel(channel) {
     if (typeof e.data === 'string') {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.type === 'meta') {
-          recvMeta = msg;
-          recvBuffer = [];
-          recvSize = 0;
+        if (msg.type === 'start') {
+          recvFiles = msg.files.map(f => ({
+            name: f.name, size: f.size, mime: f.mime,
+            buffer: [], received: 0, url: null, complete: false
+          }));
+          activeRecvIndex = -1;
           showRecvState('recvProgress');
-          $('recvFileInfo').textContent = msg.name + ' · ' + formatBytes(msg.size);
-        } else if (msg.type === 'done') {
-          finishReceive();
+          renderRecvFileList();
+        } else if (msg.type === 'file-start') {
+          activeRecvIndex = msg.index;
+          renderRecvFileList();
+        } else if (msg.type === 'file-end') {
+          const file = recvFiles[msg.index];
+          if (file) {
+            const blob = new Blob(file.buffer, { type: file.mime });
+            file.url = URL.createObjectURL(blob);
+            file.complete = true;
+            file.buffer = [];
+            renderRecvFileList();
+          }
+        } else if (msg.type === 'all-done') {
+          showRecvDone();
         }
       } catch (err) {
         console.error('parse error', err);
       }
     } else {
-      recvBuffer.push(e.data);
-      recvSize += e.data.byteLength;
-      const pct = Math.min(100, (recvSize / recvMeta.size) * 100);
-      $('recvProgressFill').style.width = pct + '%';
-      $('recvBytesRecv').textContent = formatBytes(recvSize) + ' / ' + formatBytes(recvMeta.size);
-      $('recvPercent').textContent = pct.toFixed(1) + '%';
+      // Binary chunk
+      if (activeRecvIndex >= 0 && recvFiles[activeRecvIndex]) {
+        const file = recvFiles[activeRecvIndex];
+        file.buffer.push(e.data);
+        file.received += e.data.byteLength;
+        updateRecvProgress();
+      }
     }
   };
 
@@ -963,69 +1137,210 @@ function setupDataChannel(channel) {
   };
 }
 
-// === FILE SENDING ===
-async function startSendingFile() {
+// === MULTI-FILE SENDING ===
+async function startSendingFiles() {
   if (!dc || dc.readyState !== 'open') return;
-  if (!selectedFile) return;
   setStep(5);
-
   showSendState('sendProgress');
 
-  const file = selectedFile;
-  dc.send(JSON.stringify({
-    type: 'meta',
-    name: file.name,
-    size: file.size,
-    mime: file.type || 'application/octet-stream'
-  }));
+  // Initialize progress tracking
+  sendProgress = selectedFiles.map(f => ({ sent: 0, total: f.size }));
 
-  $('sendingFileInfo').textContent = file.name + ' · ' + formatBytes(file.size);
+  // Send start message with file list
+  const filesMeta = selectedFiles.map((f, i) => ({
+    index: i, name: f.name, size: f.size, mime: f.type || 'application/octet-stream'
+  }));
+  dc.send(JSON.stringify({ type: 'start', files: filesMeta }));
+
+  renderSendFileList();
 
   const chunkSize = 64 * 1024;
-  let offset = 0;
-  const total = file.size;
 
-  while (offset < total) {
-    if (dc.bufferedAmount > 4 * 1024 * 1024) {
-      await new Promise(r => setTimeout(r, 10));
-      continue;
-    }
-    if (dc.readyState !== 'open') {
-      showToast('Koneksi terputus saat transfer', 'error');
-      return;
-    }
-    const slice = file.slice(offset, Math.min(offset + chunkSize, total));
-    const buf = await slice.arrayBuffer();
-    dc.send(buf);
-    offset += buf.byteLength;
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const file = selectedFiles[i];
+    dc.send(JSON.stringify({ type: 'file-start', index: i }));
 
-    const pct = (offset / total) * 100;
-    $('sendProgressFill').style.width = pct + '%';
-    $('sendBytesSent').textContent = formatBytes(offset) + ' / ' + formatBytes(total);
-    $('sendPercent').textContent = pct.toFixed(1) + '%';
+    let offset = 0;
+    const total = file.size;
 
-    if (offset % (chunkSize * 16) === 0) {
-      await new Promise(r => setTimeout(r, 0));
+    while (offset < total) {
+      if (dc.bufferedAmount > 4 * 1024 * 1024) {
+        await new Promise(r => setTimeout(r, 10));
+        continue;
+      }
+      if (dc.readyState !== 'open') {
+        showToast('Koneksi terputus saat transfer', 'error');
+        return;
+      }
+      const slice = file.slice(offset, Math.min(offset + chunkSize, total));
+      const buf = await slice.arrayBuffer();
+      dc.send(buf);
+      offset += buf.byteLength;
+      sendProgress[i].sent = offset;
+      updateSendProgress();
+      if (offset % (chunkSize * 16) === 0) {
+        await new Promise(r => setTimeout(r, 0));
+      }
     }
+
+    dc.send(JSON.stringify({ type: 'file-end', index: i }));
+    await new Promise(r => setTimeout(r, 100));
   }
 
-  dc.send(JSON.stringify({ type: 'done' }));
+  dc.send(JSON.stringify({ type: 'all-done' }));
   await new Promise(r => setTimeout(r, 300));
 
+  const totalSize = selectedFiles.reduce((s, f) => s + f.size, 0);
+  $('sendDoneSummary').textContent = `${selectedFiles.length} file · ${formatBytes(totalSize)} berhasil dikirim`;
   showSendState('sendDone');
   setStatus('Transfer complete', 'success');
 }
 
-function finishReceive() {
-  const blob = new Blob(recvBuffer, { type: recvMeta.mime });
-  const url = URL.createObjectURL(blob);
-  $('downloadLink').href = url;
-  $('downloadLink').download = recvMeta.name;
-  $('recvFileName').textContent = recvMeta.name + ' · ' + formatBytes(recvMeta.size);
+function renderSendFileList() {
+  const list = $('sendFileList');
+  list.innerHTML = '';
+  selectedFiles.forEach((file, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-prog-item';
+    item.id = 'send-item-' + i;
+    item.innerHTML = `
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="text-sm">${getFileIcon(file.name)}</span>
+        <span class="text-xs text-gray-300 truncate flex-1">${file.name}</span>
+        <span class="text-xs text-gray-500 mono" id="send-item-pct-${i}">0%</span>
+      </div>
+      <div class="progress-track" style="height: 3px;">
+        <div class="progress-fill" id="send-item-fill-${i}" style="width: 0%"></div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function updateSendProgress() {
+  let totalSent = 0, totalSize = 0;
+  sendProgress.forEach((p, i) => {
+    totalSent += p.sent;
+    totalSize += p.total;
+    const pct = p.total > 0 ? (p.sent / p.total) * 100 : 0;
+    const fill = $('send-item-fill-' + i);
+    const pctEl = $('send-item-pct-' + i);
+    const item = $('send-item-' + i);
+    if (fill) fill.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct.toFixed(0) + '%';
+    if (item) {
+      item.classList.remove('active', 'done');
+      if (pct >= 100) item.classList.add('done');
+      else if (pct > 0) item.classList.add('active');
+    }
+  });
+  const overallPct = totalSize > 0 ? (totalSent / totalSize) * 100 : 0;
+  $('sendOverallFill').style.width = overallPct + '%';
+  $('sendOverallPct').textContent = overallPct.toFixed(1) + '%';
+  $('sendOverallBytes').textContent = formatBytes(totalSent) + ' / ' + formatBytes(totalSize);
+  const doneCount = sendProgress.filter(p => p.sent >= p.total).length;
+  $('sendFileCount').textContent = doneCount + ' / ' + sendProgress.length + ' files';
+}
+
+// === RECEIVER PROGRESS ===
+function renderRecvFileList() {
+  const list = $('recvFileList');
+  list.innerHTML = '';
+  recvFiles.forEach((file, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-prog-item';
+    if (i === activeRecvIndex && !file.complete) item.classList.add('active');
+    if (file.complete) item.classList.add('done');
+    item.id = 'recv-item-' + i;
+    const pct = file.size > 0 ? (file.received / file.size) * 100 : 0;
+    item.innerHTML = `
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="text-sm">${getFileIcon(file.name)}</span>
+        <span class="text-xs text-gray-300 truncate flex-1">${file.name}</span>
+        <span class="text-xs text-gray-500 mono" id="recv-item-pct-${i}">${pct.toFixed(0)}%</span>
+      </div>
+      <div class="progress-track" style="height: 3px;">
+        <div class="progress-fill" id="recv-item-fill-${i}" style="width: ${pct}%"></div>
+      </div>
+      ${file.complete ? `<a class="dl-link mt-1.5 inline-flex" href="${file.url}" download="${file.name}">Download</a>` : ''}
+    `;
+    list.appendChild(item);
+  });
+}
+
+function updateRecvProgress() {
+  let totalRecv = 0, totalSize = 0;
+  recvFiles.forEach((file, i) => {
+    totalRecv += file.received;
+    totalSize += file.size;
+    const pct = file.size > 0 ? (file.received / file.size) * 100 : 0;
+    const fill = $('recv-item-fill-' + i);
+    const pctEl = $('recv-item-pct-' + i);
+    if (fill) fill.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct.toFixed(0) + '%';
+  });
+  const overallPct = totalSize > 0 ? (totalRecv / totalSize) * 100 : 0;
+  $('recvOverallFill').style.width = overallPct + '%';
+  $('recvOverallPct').textContent = overallPct.toFixed(1) + '%';
+  $('recvOverallBytes').textContent = formatBytes(totalRecv) + ' / ' + formatBytes(totalSize);
+  const doneCount = recvFiles.filter(f => f.complete).length;
+  $('recvFileCount').textContent = doneCount + ' / ' + recvFiles.length + ' files';
+}
+
+function showRecvDone() {
+  const totalSize = recvFiles.reduce((s, f) => s + f.size, 0);
+  $('recvFileSummary').textContent = `${recvFiles.length} file · ${formatBytes(totalSize)}`;
+  const list = $('recvDoneList');
+  list.innerHTML = '';
+  recvFiles.forEach((file, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-card';
+    item.innerHTML = `
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-green-500/20 to-cyan-500/20 border border-green-500/20 flex items-center justify-center text-base flex-shrink-0">
+        ${getFileIcon(file.name)}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium truncate">${file.name}</div>
+        <div class="text-xs text-gray-500 mono mt-0.5">${formatBytes(file.size)}</div>
+      </div>
+      <a class="dl-link flex-shrink-0" href="${file.url}" download="${file.name}">Download</a>
+    `;
+    list.appendChild(item);
+  });
   showRecvState('recvDone');
   setStatus('Transfer complete', 'success');
-  showToast('File diterima: ' + recvMeta.name, 'success');
+  showToast(`${recvFiles.length} file diterima!`, 'success');
 }
+
+// === DOWNLOAD ALL AS ZIP ===
+ $('downloadAllBtn').addEventListener('click', async () => {
+  if (recvFiles.length === 0) return;
+  const btn = $('downloadAllBtn');
+  btn.textContent = 'Membuat ZIP...';
+  btn.disabled = true;
+  try {
+    const zip = new JSZip();
+    for (const file of recvFiles) {
+      if (file.url) {
+        const resp = await fetch(file.url);
+        const blob = await resp.blob();
+        zip.file(file.name, blob);
+      }
+    }
+    const content = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'beam-files-' + Date.now() + '.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('ZIP downloaded!', 'success');
+  } catch (e) {
+    showToast('Gagal membuat ZIP: ' + e.message, 'error');
+  }
+  btn.textContent = 'Download All (ZIP)';
+  btn.disabled = false;
+});
 
 // === SCAN LOOP ===
 function scanLoop(videoId, callback) {
@@ -1065,21 +1380,27 @@ function resetAll() {
   recvScanRunning = false;
   if (pc) { try { pc.close(); } catch(e){} pc = null; }
   dc = null;
-  selectedFile = null;
-  recvBuffer = [];
-  recvMeta = null;
-  recvSize = 0;
+  selectedFiles = [];
+  sendProgress = [];
+  recvFiles = [];
+  activeRecvIndex = -1;
+  recvChunks = {};
+  recvTotalChunks = 0;
   if (offerRetryTimer) { clearInterval(offerRetryTimer); offerRetryTimer = null; }
+  if (qrChunkInterval) { clearInterval(qrChunkInterval); qrChunkInterval = null; }
+  if (ansChunkInterval) { clearInterval(ansChunkInterval); ansChunkInterval = null; }
 
   showSendState('sendIdle');
   $('fileList').classList.add('hidden');
   $('fileList').innerHTML = '';
+  $('addMoreBtn').classList.add('hidden');
   dropzone.classList.remove('hidden');
   fileInput.value = '';
 
   showRecvState('recvIdle');
   $('recvP2PStatus').textContent = '—';
   $('recvP2PStatus').className = 'text-gray-500 mono text-xs';
+  $('recvChunkProgress').classList.add('hidden');
 
   setStep(0);
   setStatus('STANDBY');
@@ -1088,10 +1409,12 @@ function resetAll() {
  $('sendAnother').onclick = () => {
   if (pc) { try { pc.close(); } catch(e){} pc = null; }
   dc = null;
-  selectedFile = null;
+  selectedFiles = [];
+  sendProgress = [];
   showSendState('sendIdle');
   $('fileList').classList.add('hidden');
   $('fileList').innerHTML = '';
+  $('addMoreBtn').classList.add('hidden');
   dropzone.classList.remove('hidden');
   fileInput.value = '';
   setStep(0);
@@ -1101,9 +1424,8 @@ function resetAll() {
  $('recvAnother').onclick = () => {
   if (pc) { try { pc.close(); } catch(e){} pc = null; }
   dc = null;
-  recvBuffer = [];
-  recvMeta = null;
-  recvSize = 0;
+  recvFiles = [];
+  activeRecvIndex = -1;
   showRecvState('recvIdle');
   $('recvP2PStatus').textContent = '—';
   $('recvP2PStatus').className = 'text-gray-500 mono text-xs';
@@ -1121,8 +1443,8 @@ function resetAll() {
       if (msg.type === 'offer' && mode === 'receive') {
         if (pc && pc.connectionState === 'connected') return;
         try {
-          const decompressed = LZString.decompress(msg.sdp);
-          const offer = JSON.parse(decompressed);
+          const offer = expandDesc(msg.desc);
+          if (pc && pc.currentRemoteDescription) return;
           showRecvState('recvScanner');
           setStatus('Auto-connecting (demo)...', 'active');
           await processOffer(offer);
@@ -1131,8 +1453,7 @@ function resetAll() {
         }
       } else if (msg.type === 'answer' && mode === 'send' && pc) {
         try {
-          const decompressed = LZString.decompress(msg.sdp);
-          const desc = JSON.parse(decompressed);
+          const desc = expandDesc(msg.desc);
           if (desc.type === 'answer' && !pc.currentRemoteDescription) {
             await pc.setRemoteDescription(desc);
             showSendState('sendProgress');
