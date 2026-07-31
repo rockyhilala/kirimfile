@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEAM — Transfer File Offline via QR</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<style>
+:root {
+  --bg-0: #08080c;
+  --bg-1: #0e0e15;
+  --bg-2: #14141f;
+  --fg: #f5f5f7;
+  --muted: #8b8b9a;
+  --amber: #fbbf24;
+  --amber-dim: #f59e0b;
+  --cyan: #22d3ee;
+  --green: #10b981;
+  --red: #ef4444;
+  --border: rgba(251, 191, 36, 0.15);
+  --card: rgba(20, 20, 31, 0.55);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg-0);
+  color: var(--fg);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.bg-layer { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(251, 191, 36, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(251, 191, 36, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 80%);
+}
+.bg-glow-1 {
+  position: absolute; width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.18), transparent 70%);
+  top: -200px; left: -200px; filter: blur(80px);
+  animation: float1 22s ease-in-out infinite;
+}
+.bg-glow-2 {
+  position: absolute; width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.14), transparent 70%);
+  bottom: -150px; right: -150px; filter: blur(80px);
+  animation: float2 28s ease-in-out infinite;
+}
+@keyframes float1 { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(80px,40px) scale(1.1);} }
+@keyframes float2 { 0%,100% { transform: translate(0,0) scale(1);} 50% { transform: translate(-60px,-30px) scale(1.05);} }
+
+.glass {
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  position: relative;
+}
+.glass::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(135deg, rgba(251,191,36,0.06), transparent 40%);
+  pointer-events: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--amber), var(--amber-dim));
+  color: #0a0a0f; font-weight: 600;
+  padding: 14px 28px; border-radius: 12px; border: none;
+  cursor: pointer; transition: all 0.2s;
+  font-family: inherit; font-size: 14px;
+  letter-spacing: 0.02em; position: relative; overflow: hidden;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(251, 191, 36, 0.35);
+}
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fg); font-weight: 500;
+  padding: 14px 28px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer; transition: all 0.2s;
+  font-family: inherit; font-size: 14px;
+}
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); }
+
+.tab-switch {
+  display: flex; gap: 4px; padding: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.tab-btn {
+  flex: 1; padding: 12px 20px;
+  background: transparent; color: var(--muted);
+  border: none; border-radius: 10px;
+  font-weight: 500; cursor: pointer; transition: all 0.25s;
+  font-family: inherit; font-size: 14px;
+}
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--amber), var(--amber-dim));
+  color: #0a0a0f;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+}
+
+.dropzone {
+  border: 2px dashed rgba(251, 191, 36, 0.25);
+  border-radius: 16px; padding: 48px 24px;
+  text-align: center; transition: all 0.25s;
+  cursor: pointer; background: rgba(251, 191, 36, 0.02);
+}
+.dropzone:hover, .dropzone.dragging {
+  border-color: var(--amber);
+  background: rgba(251, 191, 36, 0.05);
+  transform: translateY(-2px);
+}
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 500;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--muted); transition: all 0.3s;
+}
+.status-dot.active {
+  background: var(--amber);
+  box-shadow: 0 0 12px var(--amber);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.status-dot.success { background: var(--green); box-shadow: 0 0 12px var(--green); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.progress-track {
+  height: 6px; background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber), var(--cyan));
+  border-radius: 999px; transition: width 0.2s;
+  position: relative; overflow: hidden;
+}
+.progress-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 1.5s linear infinite;
+}
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+.qr-container {
+  background: white; padding: 18px;
+  border-radius: 16px; display: inline-block;
+  position: relative;
+  box-shadow: 0 0 40px rgba(251, 191, 36, 0.2);
+}
+.qr-container::before, .qr-container::after {
+  content: ''; position: absolute;
+  width: 28px; height: 28px;
+  border: 3px solid var(--amber); pointer-events: none;
+}
+.qr-container::before {
+  top: -3px; left: -3px;
+  border-right: none; border-bottom: none;
+  border-radius: 12px 0 0 0;
+}
+.qr-container::after {
+  bottom: -3px; right: -3px;
+  border-left: none; border-top: none;
+  border-radius: 0 0 12px 0;
+}
+
+.scanner-frame {
+  position: relative; width: 100%; max-width: 300px;
+  aspect-ratio: 1; margin: 0 auto;
+  border-radius: 16px; overflow: hidden;
+  background: #000; box-shadow: 0 0 40px rgba(0,0,0,0.5);
+}
+.scanner-frame video { width: 100%; height: 100%; object-fit: cover; }
+.scanner-overlay { position: absolute; inset: 0; pointer-events: none; }
+.scanner-corner {
+  position: absolute; width: 32px; height: 32px;
+  border: 3px solid var(--amber);
+  filter: drop-shadow(0 0 6px var(--amber));
+}
+.scanner-corner.tl { top: 16px; left: 16px; border-right: none; border-bottom: none; border-radius: 10px 0 0 0; }
+.scanner-corner.tr { top: 16px; right: 16px; border-left: none; border-bottom: none; border-radius: 0 10px 0 0; }
+.scanner-corner.bl { bottom: 16px; left: 16px; border-right: none; border-top: none; border-radius: 0 0 0 10px; }
+.scanner-corner.br { bottom: 16px; right: 16px; border-left: none; border-top: none; border-radius: 0 0 10px 0; }
+.scan-line {
+  position: absolute; left: 16px; right: 16px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--amber), transparent);
+  box-shadow: 0 0 12px var(--amber);
+  animation: scan 2.5s ease-in-out infinite;
+}
+@keyframes scan { 0%,100% { top: 16px; } 50% { top: calc(100% - 18px); } }
+
+.step {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0; opacity: 0.35; transition: opacity 0.3s;
+}
+.step.active { opacity: 1; }
+.step.done { opacity: 0.65; }
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
+  transition: all 0.3s;
+}
+.step.active .step-num {
+  background: var(--amber); color: #0a0a0f;
+  border-color: var(--amber);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.5);
+}
+.step.done .step-num { background: var(--green); color: #fff; border-color: var(--green); }
+.step-text { font-size: 14px; }
+
+.fade-in { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.toast {
+  position: fixed; top: 24px; left: 50%;
+  transform: translateX(-50%) translateY(-120px);
+  background: var(--bg-2); border: 1px solid var(--border);
+  padding: 14px 24px; border-radius: 12px; z-index: 1000;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 90vw; font-size: 14px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { border-color: var(--red); }
+.toast.success { border-color: var(--green); }
+
+.logo-mark {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--amber), var(--cyan));
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+}
+.logo-mark::before {
+  content: ''; position: absolute; inset: 2px;
+  background: var(--bg-0); border-radius: 10px;
+}
+.logo-mark svg { position: relative; z-index: 1; }
+
+.toggle-track {
+  width: 44px; height: 24px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 999px; position: relative;
+  transition: background 0.2s;
+}
+.toggle-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px; background: white;
+  border-radius: 50%; transition: transform 0.2s;
+}
+input:checked + .toggle-track { background: var(--amber); }
+input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--amber) 0%, #fde047 50%, var(--cyan) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+
+.file-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.2s;
+}
+.file-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(251, 191, 36, 0.2); }
+
+@media (max-width: 768px) {
+  .tab-btn { padding: 10px 12px; font-size: 13px; }
+  h1 { font-size: 2.5rem !important; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-1); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+@keyframes receiveGlow {
+  0%,100% { box-shadow: 0 0 0 rgba(34, 211, 238, 0); }
+  50% { box-shadow: 0 0 30px rgba(34, 211, 238, 0.25); }
+}
+.receiving { animation: receiveGlow 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div class="bg-layer">
+  <div class="bg-grid"></div>
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+</div>
+
+<header class="px-6 py-5 flex items-center justify-between max-w-6xl mx-auto">
+  <div class="flex items-center gap-3">
+    <div class="logo-mark">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+            <stop stop-color="#fbbf24"/>
+            <stop offset="1" stop-color="#22d3ee"/>
+          </linearGradient>
+        </defs>
+        <path d="M5 12h4l2-7 2 14 2-7h4" stroke="url(#lg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="text-lg font-bold tracking-tight leading-none">BEAM<span class="text-amber-400">.</span></div>
+      <div class="text-[10px] text-gray-500 mono mt-1 tracking-widest">OFFLINE · P2P · ENCRYPTED</div>
+    </div>
+  </div>
+  <div class="status-pill" id="connStatus">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText" class="mono">STANDBY</span>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 pb-12">
+  <section class="text-center py-12">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] mono text-amber-300 border border-amber-500/25 bg-amber-500/5 mb-6 tracking-widest">
+      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+      NO INTERNET · NO SERVER · NO CLOUD
+    </div>
+    <h1 class="text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-5">
+      Transfer file antar HP<br>
+      <span class="gradient-text">tanpa internet sama sekali</span>
+    </h1>
+    <p class="text-gray-400 max-w-xl mx-auto leading-relaxed">
+      Aktifkan hotspot di HP A, scan QR dari HP B — file terkirim langsung antar perangkat dengan kecepatan penuh jaringan lokal. Enkripsi end-to-end bawaan WebRTC.
+    </p>
+  </section>
+
+  <div class="tab-switch max-w-md mx-auto mb-8">
+    <button class="tab-btn active" data-tab="send">KIRIM FILE</button>
+    <button class="tab-btn" data-tab="receive">TERIMA FILE</button>
+  </div>
+
+  <section id="sendPanel" class="grid md:grid-cols-2 gap-5">
+    <div class="glass p-6 space-y-5">
+      <div>
+        <div class="text-xs text-gray-500 mb-1.5 mono tracking-widest">MODE · SENDER</div>
+        <h2 class="text-xl font-semibold">Pilih file untuk dikirim</h2>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" class="hidden">
+        <svg class="mx-auto mb-3 text-amber-400" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg>
+        <div class="font-medium">Ketuk atau seret file ke sini</div>
+        <div class="text-xs text-gray-500 mt-1.5 mono">FORMAT APAPUN · MAX 100MB</div>
+      </div>
+
+      <div id="fileList" class="space-y-2 hidden"></div>
+
+      <div class="pt-2">
+        <div class="text-[10px] text-gray-500 mb-2 mono tracking-widest">ALUR KERJA</div>
+        <div class="step" id="step1"><div class="step-num">1</div><div class="step-text">Pilih file yang akan dikirim</div></div>
+        <div class="step" id="step2"><div class="step-num">2</div><div class="step-text">Aktifkan hotspot Wi-Fi di HP ini</div></div>
+        <div class="step" id="step3"><div class="step-num">3</div><div class="step-text">Tampilkan QR Code koneksi</div></div>
+        <div class="step" id="step4"><div class="step-num">4</div><div class="step-text">Pindai QR balasan dari HP penerima</div></div>
+        <div class="step" id="step5"><div class="step-num">5</div><div class="step-text">Transfer berlangsung</div></div>
+      </div>
+    </div>
+
+    <div class="glass p-6 flex flex-col items-center justify-center min-h-[520px]">
+      <div id="sendIdle" class="text-center text-gray-500 fade-in">
+        <svg class="mx-auto mb-4 opacity-30" width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 18h3v3M18 14h3"/>
+        </svg>
+        <div class="text-sm max-w-xs mx-auto">Pilih file di panel kiri untuk mulai membuat QR Code koneksi.</div>
+      </div>
+
+      <div id="sendQR" class="hidden flex-col items-center fade-in w-full">
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest">▼ SCAN QR INI DARI HP B ▼</div>
+        <div class="qr-container"><canvas id="qrCanvas"></canvas></div>
+        <div class="text-xs text-gray-500 mt-5 text-center max-w-xs leading-relaxed">
+          Buka aplikasi <span class="text-amber-300">BEAM</span> di HP B, pilih <span class="text-amber-300">Terima File</span>, lalu arahkan kamera ke QR di atas.
+        </div>
+        <button class="btn-primary mt-5 text-sm" id="scanAnswerBtn">HP B sudah memindai → Lanjut</button>
+      </div>
+
+      <div id="sendScanAnswer" class="hidden flex-col items-center w-full fade-in">
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest">PINDAI QR DARI HP B</div>
+        <div class="scanner-frame">
+          <video id="sendVideo" playsinline muted></video>
+          <div class="scanner-overlay">
+            <div class="scanner-corner tl"></div><div class="scanner-corner tr"></div>
+            <div class="scanner-corner bl"></div><div class="scanner-corner br"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+        <button class="btn-secondary mt-5 text-sm" id="cancelSendScan">Batal</button>
+      </div>
+
+      <div id="sendProgress" class="hidden w-full fade-in">
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest text-center">MENGIRIM FILE...</div>
+        <div id="sendingFileInfo" class="text-sm mb-3 text-center truncate"></div>
+        <div class="progress-track"><div class="progress-fill" id="sendProgressFill" style="width: 0%"></div></div>
+        <div class="flex justify-between text-xs text-gray-500 mt-2 mono">
+          <span id="sendBytesSent">0 B</span><span id="sendPercent">0%</span>
+        </div>
+        <div class="text-center text-[11px] text-gray-600 mt-4 mono">E2E ENCRYPTED · DIRECT P2P</div>
+      </div>
+
+      <div id="sendDone" class="hidden text-center fade-in">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+          <svg class="text-green-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="text-lg font-semibold">Transfer Selesai</div>
+        <div class="text-sm text-gray-400 mt-1">File berhasil dikirim ke perangkat tujuan.</div>
+        <button class="btn-secondary mt-5 text-sm" id="sendAnother">Kirim File Lain</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="receivePanel" class="hidden grid md:grid-cols-2 gap-5">
+    <div class="glass p-6 flex flex-col items-center justify-center min-h-[520px]">
+      <div id="recvIdle" class="text-center fade-in">
+        <svg class="mx-auto mb-4 opacity-30" width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <div class="text-sm text-gray-400 max-w-xs mx-auto mb-5">Siap menerima file dari perangkat lain. Pastikan sudah terhubung ke hotspot HP A.</div>
+        <button class="btn-primary" id="startScanBtn">Mulai Kamera</button>
+      </div>
+
+      <div id="recvScanner" class="hidden flex-col items-center w-full fade-in">
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest">ARAHKAN KE QR CODE HP A</div>
+        <div class="scanner-frame">
+          <video id="recvVideo" playsinline muted></video>
+          <div class="scanner-overlay">
+            <div class="scanner-corner tl"></div><div class="scanner-corner tr"></div>
+            <div class="scanner-corner bl"></div><div class="scanner-corner br"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+        <button class="btn-secondary mt-5 text-sm" id="cancelRecvScan">Batal</button>
+      </div>
+
+      <div id="recvAnswerQR" class="hidden flex-col items-center fade-in">
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest">▼ SCAN QR INI DI HP A ▼</div>
+        <div class="qr-container"><canvas id="answerQrCanvas"></canvas></div>
+        <div class="text-xs text-gray-500 mt-5 text-center max-w-xs leading-relaxed">
+          Kembali ke HP A, tekan <span class="text-amber-300">"HP B sudah memindai → Lanjut"</span>, lalu arahkan kamera ke QR ini.
+        </div>
+      </div>
+
+      <div id="recvProgress" class="hidden w-full fade-in receiving">
+        <div class="text-xs text-amber-300 mb-4 mono tracking-widest text-center">MENERIMA FILE...</div>
+        <div id="recvFileInfo" class="text-sm mb-3 text-center truncate"></div>
+        <div class="progress-track"><div class="progress-fill" id="recvProgressFill" style="width: 0%"></div></div>
+        <div class="flex justify-between text-xs text-gray-500 mt-2 mono">
+          <span id="recvBytesRecv">0 B</span><span id="recvPercent">0%</span>
+        </div>
+        <div class="text-center text-[11px] text-gray-600 mt-4 mono">E2E ENCRYPTED · DIRECT P2P</div>
+      </div>
+
+      <div id="recvDone" class="hidden text-center fade-in">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+          <svg class="text-green-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="text-lg font-semibold">File Diterima</div>
+        <div id="recvFileName" class="text-sm text-gray-400 mt-1 mb-5 truncate max-w-xs mx-auto"></div>
+        <a id="downloadLink" class="btn-primary inline-block no-underline" download>Download File</a>
+        <button class="btn-secondary mt-3 text-sm block w-full" id="recvAnother">Terima File Lain</button>
+      </div>
+    </div>
+
+    <div class="glass p-6 space-y-5">
+      <div>
+        <div class="text-xs text-gray-500 mb-1.5 mono tracking-widest">MODE · RECEIVER</div>
+        <h2 class="text-xl font-semibold">Cara menerima file</h2>
+      </div>
+      <div class="rounded-xl bg-amber-500/5 border border-amber-500/15 p-5">
+        <div class="text-amber-300 font-medium mb-3 text-[11px] mono tracking-widest">LANGKAH-LANGKAH:</div>
+        <ol class="space-y-2.5 text-sm text-gray-300 list-none">
+          <li class="flex gap-3"><span class="text-amber-400 mono text-xs mt-0.5">01</span><span>Pastikan HP B terhubung ke hotspot HP A (cek Settings → Wi-Fi).</span></li>
+          <li class="flex gap-3"><span class="text-amber-400 mono text-xs mt-0.5">02</span><span>Buka aplikasi BEAM di HP A, pilih file yang ingin dikirim.</span></li>
+          <li class="flex gap-3"><span class="text-amber-400 mono text-xs mt-0.5">03</span><span>Di HP B (aplikasi ini), tekan <span class="text-amber-300">"Mulai Kamera"</span>.</span></li>
+          <li class="flex gap-3"><span class="text-amber-400 mono text-xs mt-0.5">04</span><span>Arahkan kamera ke QR Code yang muncul di HP A.</span></li>
+          <li class="flex gap-3"><span class="text-amber-400 mono text-xs mt-0.5">05</span><span>QR Code balasan akan muncul di HP B — scan dari HP A.</span></li>
+          <li class="flex gap-3"><span class="text-amber-400 mono text-xs mt-0.5">06</span><span>File otomatis ditransfer — bisa didownload setelah selesai.</span></li>
+        </ol>
+      </div>
+      <div>
+        <div class="text-[10px] text-gray-500 mb-3 mono tracking-widest">STATUS KONEKSI</div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-sm"><span class="text-gray-400">Peer Connection</span><span id="recvP2PStatus" class="text-gray-500 mono text-xs">—</span></div>
+          <div class="flex items-center justify-between text-sm"><span class="text-gray-400">Transport Layer</span><span class="text-amber-300 mono text-xs">WebRTC DataChannel</span></div>
+          <div class="flex items-center justify-between text-sm"><span class="text-gray-400">Encryption</span><span class="text-green-400 mono text-xs">DTLS · E2E</span></div>
+          <div class="flex items-center justify-between text-sm"><span class="text-gray-400">Network</span><span class="text-cyan-400 mono text-xs">Local / Direct</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-8 glass p-5 flex flex-col md:flex-row items-start md:items-center gap-4">
+    <div class="flex-1">
+      <div class="flex items-center gap-2 mb-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-400"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div class="font-medium">Demo Mode</div>
+      </div>
+      <div class="text-sm text-gray-400">Test aplikasi di satu browser dengan 2 tab — signaling otomatis tanpa scan QR. Buka tab baru di browser yang sama, pilih mode lawan, lalu pilih file.</div>
+    </div>
+    <label class="flex items-center gap-3 cursor-pointer select-none">
+      <input type="checkbox" id="demoToggle" class="sr-only">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span class="text-sm font-medium">Aktifkan</span>
+    </label>
+  </div>
+
+  <footer class="mt-12 text-center text-[10px] text-gray-600 mono tracking-widest">
+    BEAM v1.0 · POWERED BY WEBRTC + QR · NO SERVER · NO CLOUD · NO TRACKING
+  </footer>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// === STATE ===
+let mode = 'send';
+let demoMode = false;
+let pc = null, dc = null;
+let selectedFile = null;
+let recvBuffer = [], recvMeta = null, recvSize = 0;
+let sendVideoStream = null, recvVideoStream = null;
+let sendScanRunning = false, recvScanRunning = false;
+let demoChannel = null;
+let lastOfferCompressed = null;
+let offerRetryTimer = null;
+
+const $ = id => document.getElementById(id);
+
+function showToast(msg, type = '') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast ' + type, 3200);
+}
+
+function setStatus(text, type = '') {
+  $('statusText').textContent = text;
+  const dot = $('statusDot');
+  dot.className = 'status-dot';
+  if (type === 'active') dot.classList.add('active');
+  if (type === 'success') dot.classList.add('success');
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 5; i++) {
+    const s = $('step' + i);
+    if (!s) continue;
+    s.classList.remove('active', 'done');
+    if (i < n) s.classList.add('done');
+    if (i === n) s.classList.add('active');
+  }
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1024 * 1024 * 1024) return (b / 1024 / 1024).toFixed(2) + ' MB';
+  return (b / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+}
+
+function showSendState(state) {
+  ['sendIdle','sendQR','sendScanAnswer','sendProgress','sendDone'].forEach(id => {
+    $(id).classList.add('hidden');
+    $(id).classList.remove('flex');
+  });
+  $(state).classList.remove('hidden');
+  $(state).classList.add('flex');
+}
+
+function showRecvState(state) {
+  ['recvIdle','recvScanner','recvAnswerQR','recvProgress','recvDone'].forEach(id => {
+    $(id).classList.add('hidden');
+    $(id).classList.remove('flex');
+  });
+  $(state).classList.remove('hidden');
+  $(state).classList.add('flex');
+}
+
+// === TABS ===
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.tab;
+    $('sendPanel').classList.toggle('hidden', mode !== 'send');
+    $('receivePanel').classList.toggle('hidden', mode !== 'receive');
+    resetAll();
+  });
+});
+
+// === FILE PICKER ===
+const dropzone = $('dropzone');
+const fileInput = $('fileInput');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragging'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragging');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  if (file.size > 100 * 1024 * 1024) {
+    showToast('File terlalu besar (max 100MB)', 'error');
+    return;
+  }
+  selectedFile = file;
+  const list = $('fileList');
+  list.innerHTML = '';
+  list.classList.remove('hidden');
+  dropzone.classList.add('hidden');
+
+  const item = document.createElement('div');
+  item.className = 'file-card';
+  item.innerHTML = `
+    <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-500/20 to-cyan-500/20 border border-amber-500/20 flex items-center justify-center text-amber-300 flex-shrink-0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="text-sm font-medium truncate">${file.name}</div>
+      <div class="text-xs text-gray-500 mono mt-0.5">${formatBytes(file.size)}</div>
+    </div>
+    <button class="text-gray-500 hover:text-red-400 transition-colors p-1" id="removeFileBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  `;
+  item.querySelector('#removeFileBtn').onclick = () => {
+    selectedFile = null;
+    list.classList.add('hidden');
+    list.innerHTML = '';
+    dropzone.classList.remove('hidden');
+    fileInput.value = '';
+    setStep(0);
+    showSendState('sendIdle');
+    if (pc) { try { pc.close(); } catch(e){} pc = null; }
+    setStatus('STANDBY');
+  };
+  list.appendChild(item);
+
+  setStep(2);
+  startSendingFlow();
+}
+
+// === SEND FLOW ===
+async function startSendingFlow() {
+  if (!selectedFile) return;
+  setStep(3);
+  setStatus('Creating offer...', 'active');
+  showSendState('sendQR');
+
+  if (pc) { try { pc.close(); } catch(e){} }
+  pc = new RTCPeerConnection({ iceServers: [] });
+
+  dc = pc.createDataChannel('file', { ordered: true });
+  dc.binaryType = 'arraybuffer';
+  setupDataChannel(dc);
+
+  let iceComplete = false;
+  pc.onicegatheringstatechange = async () => {
+    if (pc.iceGatheringState === 'complete' && !iceComplete) {
+      iceComplete = true;
+      const sdp = JSON.stringify(pc.localDescription);
+      const compressed = LZString.compress(sdp);
+      lastOfferCompressed = compressed;
+      try {
+        await QRCode.toCanvas($('qrCanvas'), compressed, {
+          width: 256, margin: 1, errorCorrectionLevel: 'L'
+        });
+      } catch (e) {
+        showToast('QR terlalu besar, coba file lebih kecil', 'error');
+        return;
+      }
+      if (demoMode && demoChannel) {
+        demoChannel.postMessage({ type: 'offer', sdp: compressed });
+        // Retry sending offer in case receiver isn't ready yet
+        if (offerRetryTimer) clearInterval(offerRetryTimer);
+        offerRetryTimer = setInterval(() => {
+          if (pc && !pc.currentRemoteDescription && pc.connectionState !== 'connected') {
+            demoChannel.postMessage({ type: 'offer', sdp: compressed });
+          } else {
+            clearInterval(offerRetryTimer);
+            offerRetryTimer = null;
+          }
+        }, 2000);
+      }
+      setStatus('Waiting for receiver...', 'active');
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    const state = pc.connectionState;
+    if (state === 'connecting') setStatus('Connecting...', 'active');
+    if (state === 'connected') {
+      setStatus('Connected', 'success');
+      if (offerRetryTimer) { clearInterval(offerRetryTimer); offerRetryTimer = null; }
+    }
+    if (state === 'disconnected' || state === 'failed') {
+      showToast('Koneksi terputus', 'error');
+      setStatus('Disconnected');
+    }
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+}
+
+// === SCAN ANSWER ===
+ $('scanAnswerBtn').addEventListener('click', async () => {
+  if (demoMode) {
+    showToast('Demo mode: menunggu answer otomatis...', '');
+    return;
+  }
+  showSendState('sendScanAnswer');
+  setStep(4);
+  setStatus('Scanning...', 'active');
+
+  try {
+    sendVideoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    $('sendVideo').srcObject = sendVideoStream;
+    await $('sendVideo').play();
+    sendScanRunning = true;
+    scanLoop('sendVideo', handleScannedAnswer);
+  } catch (e) {
+    showToast('Tidak bisa akses kamera: ' + e.message, 'error');
+  }
+});
+
+async function handleScannedAnswer(text) {
+  if (!sendScanRunning) return;
+  sendScanRunning = false;
+  stopSendVideo();
+
+  try {
+    const decompressed = LZString.decompress(text);
+    if (!decompressed) throw new Error('invalid data');
+    const desc = JSON.parse(decompressed);
+    if (desc.type !== 'answer') {
+      showToast('QR tidak valid (bukan answer)', 'error');
+      sendScanRunning = true;
+      scanLoop('sendVideo', handleScannedAnswer);
+      return;
+    }
+    await pc.setRemoteDescription(desc);
+    $('sendScanAnswer').classList.add('hidden');
+    $('sendScanAnswer').classList.remove('flex');
+  } catch (e) {
+    showToast('Gagal membaca QR: ' + e.message, 'error');
+    sendScanRunning = true;
+    scanLoop('sendVideo', handleScannedAnswer);
+  }
+}
+
+function stopSendVideo() {
+  if (sendVideoStream) {
+    sendVideoStream.getTracks().forEach(t => t.stop());
+    sendVideoStream = null;
+  }
+}
+
+ $('cancelSendScan').onclick = () => {
+  sendScanRunning = false;
+  stopSendVideo();
+  showSendState('sendQR');
+  setStatus('Waiting for receiver...', 'active');
+};
+
+// === RECEIVE FLOW ===
+ $('startScanBtn').onclick = async () => {
+  if (demoMode) {
+    showToast('Demo mode: menunggu offer otomatis...', '');
+    return;
+  }
+  showRecvState('recvScanner');
+  setStatus('Scanning...', 'active');
+
+  try {
+    recvVideoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    $('recvVideo').srcObject = recvVideoStream;
+    await $('recvVideo').play();
+    recvScanRunning = true;
+    scanLoop('recvVideo', handleScannedOffer);
+  } catch (e) {
+    showToast('Tidak bisa akses kamera: ' + e.message, 'error');
+  }
+};
+
+ $('cancelRecvScan').onclick = () => {
+  recvScanRunning = false;
+  stopRecvVideo();
+  showRecvState('recvIdle');
+  setStatus('STANDBY');
+};
+
+function stopRecvVideo() {
+  if (recvVideoStream) {
+    recvVideoStream.getTracks().forEach(t => t.stop());
+    recvVideoStream = null;
+  }
+}
+
+async function handleScannedOffer(text) {
+  if (!recvScanRunning) return;
+  try {
+    const decompressed = LZString.decompress(text);
+    if (!decompressed) throw new Error('invalid');
+    const offer = JSON.parse(decompressed);
+    if (offer.type !== 'offer') {
+      showToast('QR tidak valid (bukan offer)', 'error');
+      return;
+    }
+    recvScanRunning = false;
+    stopRecvVideo();
+    await processOffer(offer);
+  } catch (e) {
+    showToast('Gagal memproses QR: ' + e.message, 'error');
+    recvScanRunning = true;
+  }
+}
+
+async function processOffer(offer) {
+  if (pc) { try { pc.close(); } catch(e){} }
+  pc = new RTCPeerConnection({ iceServers: [] });
+
+  pc.ondatachannel = (e) => {
+    dc = e.channel;
+    dc.binaryType = 'arraybuffer';
+    setupDataChannel(dc);
+  };
+
+  pc.onconnectionstatechange = () => {
+    const state = pc.connectionState;
+    if (state === 'connecting') {
+      setStatus('Connecting...', 'active');
+      $('recvP2PStatus').textContent = 'Connecting...';
+      $('recvP2PStatus').className = 'text-amber-300 mono text-xs';
+    }
+    if (state === 'connected') {
+      setStatus('Connected', 'success');
+      $('recvP2PStatus').textContent = 'Connected';
+      $('recvP2PStatus').className = 'text-green-400 mono text-xs';
+    }
+    if (state === 'disconnected' || state === 'failed') {
+      showToast('Koneksi terputus', 'error');
+      setStatus('Disconnected');
+      $('recvP2PStatus').textContent = 'Disconnected';
+      $('recvP2PStatus').className = 'text-red-400 mono text-xs';
+    }
+  };
+
+  await pc.setRemoteDescription(offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  let iceComplete = false;
+  pc.onicegatheringstatechange = () => {
+    if (pc.iceGatheringState === 'complete' && !iceComplete) {
+      iceComplete = true;
+      const sdp = JSON.stringify(pc.localDescription);
+      const compressed = LZString.compress(sdp);
+      showRecvState('recvAnswerQR');
+      QRCode.toCanvas($('answerQrCanvas'), compressed, {
+        width: 256, margin: 1, errorCorrectionLevel: 'L'
+      }, err => {
+        if (err) showToast('QR terlalu besar', 'error');
+      });
+      if (demoMode && demoChannel) {
+        demoChannel.postMessage({ type: 'answer', sdp: compressed });
+      }
+      setStatus('Waiting for sender to scan...', 'active');
+    }
+  };
+}
+
+// === DATA CHANNEL ===
+function setupDataChannel(channel) {
+  channel.onopen = () => {
+    setStatus('Connected', 'success');
+    if (mode === 'send' && selectedFile) {
+      startSendingFile();
+    }
+  };
+
+  channel.onmessage = (e) => {
+    if (typeof e.data === 'string') {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'meta') {
+          recvMeta = msg;
+          recvBuffer = [];
+          recvSize = 0;
+          showRecvState('recvProgress');
+          $('recvFileInfo').textContent = msg.name + ' · ' + formatBytes(msg.size);
+        } else if (msg.type === 'done') {
+          finishReceive();
+        }
+      } catch (err) {
+        console.error('parse error', err);
+      }
+    } else {
+      recvBuffer.push(e.data);
+      recvSize += e.data.byteLength;
+      const pct = Math.min(100, (recvSize / recvMeta.size) * 100);
+      $('recvProgressFill').style.width = pct + '%';
+      $('recvBytesRecv').textContent = formatBytes(recvSize) + ' / ' + formatBytes(recvMeta.size);
+      $('recvPercent').textContent = pct.toFixed(1) + '%';
+    }
+  };
+
+  channel.onclose = () => {
+    if (pc && pc.connectionState !== 'connected') {
+      setStatus('Disconnected');
+    }
+  };
+
+  channel.onerror = (e) => {
+    console.error('DC error', e);
+    showToast('DataChannel error', 'error');
+  };
+}
+
+// === FILE SENDING ===
+async function startSendingFile() {
+  if (!dc || dc.readyState !== 'open') return;
+  if (!selectedFile) return;
+  setStep(5);
+
+  showSendState('sendProgress');
+
+  const file = selectedFile;
+  dc.send(JSON.stringify({
+    type: 'meta',
+    name: file.name,
+    size: file.size,
+    mime: file.type || 'application/octet-stream'
+  }));
+
+  $('sendingFileInfo').textContent = file.name + ' · ' + formatBytes(file.size);
+
+  const chunkSize = 64 * 1024;
+  let offset = 0;
+  const total = file.size;
+
+  while (offset < total) {
+    if (dc.bufferedAmount > 4 * 1024 * 1024) {
+      await new Promise(r => setTimeout(r, 10));
+      continue;
+    }
+    if (dc.readyState !== 'open') {
+      showToast('Koneksi terputus saat transfer', 'error');
+      return;
+    }
+    const slice = file.slice(offset, Math.min(offset + chunkSize, total));
+    const buf = await slice.arrayBuffer();
+    dc.send(buf);
+    offset += buf.byteLength;
+
+    const pct = (offset / total) * 100;
+    $('sendProgressFill').style.width = pct + '%';
+    $('sendBytesSent').textContent = formatBytes(offset) + ' / ' + formatBytes(total);
+    $('sendPercent').textContent = pct.toFixed(1) + '%';
+
+    if (offset % (chunkSize * 16) === 0) {
+      await new Promise(r => setTimeout(r, 0));
+    }
+  }
+
+  dc.send(JSON.stringify({ type: 'done' }));
+  await new Promise(r => setTimeout(r, 300));
+
+  showSendState('sendDone');
+  setStatus('Transfer complete', 'success');
+}
+
+function finishReceive() {
+  const blob = new Blob(recvBuffer, { type: recvMeta.mime });
+  const url = URL.createObjectURL(blob);
+  $('downloadLink').href = url;
+  $('downloadLink').download = recvMeta.name;
+  $('recvFileName').textContent = recvMeta.name + ' · ' + formatBytes(recvMeta.size);
+  showRecvState('recvDone');
+  setStatus('Transfer complete', 'success');
+  showToast('File diterima: ' + recvMeta.name, 'success');
+}
+
+// === SCAN LOOP ===
+function scanLoop(videoId, callback) {
+  const video = $(videoId);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  let lastScan = 0;
+
+  function tick() {
+    if (videoId === 'sendVideo' && !sendScanRunning) return;
+    if (videoId === 'recvVideo' && !recvScanRunning) return;
+
+    const now = performance.now();
+    if (now - lastScan > 100 && video.readyState === video.HAVE_ENOUGH_DATA) {
+      lastScan = now;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      try {
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data && code.data.length > 0) {
+          callback(code.data);
+        }
+      } catch (e) {}
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+// === RESET ===
+function resetAll() {
+  stopSendVideo();
+  stopRecvVideo();
+  sendScanRunning = false;
+  recvScanRunning = false;
+  if (pc) { try { pc.close(); } catch(e){} pc = null; }
+  dc = null;
+  selectedFile = null;
+  recvBuffer = [];
+  recvMeta = null;
+  recvSize = 0;
+  if (offerRetryTimer) { clearInterval(offerRetryTimer); offerRetryTimer = null; }
+
+  showSendState('sendIdle');
+  $('fileList').classList.add('hidden');
+  $('fileList').innerHTML = '';
+  dropzone.classList.remove('hidden');
+  fileInput.value = '';
+
+  showRecvState('recvIdle');
+  $('recvP2PStatus').textContent = '—';
+  $('recvP2PStatus').className = 'text-gray-500 mono text-xs';
+
+  setStep(0);
+  setStatus('STANDBY');
+}
+
+ $('sendAnother').onclick = () => {
+  if (pc) { try { pc.close(); } catch(e){} pc = null; }
+  dc = null;
+  selectedFile = null;
+  showSendState('sendIdle');
+  $('fileList').classList.add('hidden');
+  $('fileList').innerHTML = '';
+  dropzone.classList.remove('hidden');
+  fileInput.value = '';
+  setStep(0);
+  setStatus('STANDBY');
+};
+
+ $('recvAnother').onclick = () => {
+  if (pc) { try { pc.close(); } catch(e){} pc = null; }
+  dc = null;
+  recvBuffer = [];
+  recvMeta = null;
+  recvSize = 0;
+  showRecvState('recvIdle');
+  $('recvP2PStatus').textContent = '—';
+  $('recvP2PStatus').className = 'text-gray-500 mono text-xs';
+  setStatus('STANDBY');
+};
+
+// === DEMO MODE ===
+ $('demoToggle').addEventListener('change', (e) => {
+  demoMode = e.target.checked;
+  resetAll();
+  if (demoMode) {
+    demoChannel = new BroadcastChannel('beam-demo');
+    demoChannel.onmessage = async (ev) => {
+      const msg = ev.data;
+      if (msg.type === 'offer' && mode === 'receive') {
+        if (pc && pc.connectionState === 'connected') return;
+        try {
+          const decompressed = LZString.decompress(msg.sdp);
+          const offer = JSON.parse(decompressed);
+          showRecvState('recvScanner');
+          setStatus('Auto-connecting (demo)...', 'active');
+          await processOffer(offer);
+        } catch (err) {
+          console.error('demo offer error', err);
+        }
+      } else if (msg.type === 'answer' && mode === 'send' && pc) {
+        try {
+          const decompressed = LZString.decompress(msg.sdp);
+          const desc = JSON.parse(decompressed);
+          if (desc.type === 'answer' && !pc.currentRemoteDescription) {
+            await pc.setRemoteDescription(desc);
+            showSendState('sendProgress');
+          }
+        } catch (err) {
+          console.error('demo answer error', err);
+        }
+      }
+    };
+    showToast('Demo mode aktif — buka tab baru, pilih mode lawan', 'success');
+  } else {
+    if (demoChannel) { demoChannel.close(); demoChannel = null; }
+    if (offerRetryTimer) { clearInterval(offerRetryTimer); offerRetryTimer = null; }
+    showToast('Demo mode nonaktif');
+  }
+});
+
+// Init
+setStatus('STANDBY');
+setStep(0);
+
+setTimeout(() => {
+  showToast('Tip: Aktifkan Demo Mode untuk test di satu browser dengan 2 tab', '');
+}, 1500);
+</script>
+</body>
+</html>
