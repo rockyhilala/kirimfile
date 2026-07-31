@@ -633,13 +633,25 @@ async function generateSignalQR(canvas, desc, badgeId) {
   const compressed = LZString.compress(json);
   const badge = $(badgeId);
 
+  // Helper agar QRCode.toCanvas mendukung Async/Await dengan benar
+  const renderQR = (text) => {
+    return new Promise((resolve, reject) => {
+      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      QRCode.toCanvas(canvas, text, {
+        width: 260,
+        margin: 1,
+        errorCorrectionLevel: 'L'
+      }, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  };
+
   try {
     if (compressed.length <= 800) {
       badge.classList.add('hidden');
-      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-      await QRCode.toCanvas(canvas, compressed, {
-        width: 260, margin: 1, errorCorrectionLevel: 'L'
-      });
+      await renderQR(compressed); // ✅ Menggunakan Promise wrapper
       return { chunked: false, compressed };
     } else {
       const chunkSize = 300;
@@ -652,10 +664,7 @@ async function generateSignalQR(canvas, desc, badgeId) {
         const data = JSON.stringify({ i: currentIdx, n: chunks.length, d: chunks[currentIdx] });
         badge.textContent = (currentIdx + 1) + '/' + chunks.length;
         try {
-          canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-          await QRCode.toCanvas(canvas, data, {
-            width: 260, margin: 1, errorCorrectionLevel: 'L'
-          });
+          await renderQR(data); // ✅ Menggunakan Promise wrapper
         } catch (e) {
           console.error('QR gen error', e);
           showToast('Gagal generate QR: data terlalu besar', 'error');
