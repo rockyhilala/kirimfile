@@ -8,10 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
- 
-<script src="jsQR.js"></script>
-<script src="lz-string.min.js"></script>
-<script src="jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -636,25 +633,13 @@ async function generateSignalQR(canvas, desc, badgeId) {
   const compressed = LZString.compress(json);
   const badge = $(badgeId);
 
-  // Helper agar QRCode.toCanvas mendukung Async/Await dengan benar
-  const renderQR = (text) => {
-    return new Promise((resolve, reject) => {
-      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-      QRCode.toCanvas(canvas, text, {
-        width: 260,
-        margin: 1,
-        errorCorrectionLevel: 'L'
-      }, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  };
-
   try {
     if (compressed.length <= 800) {
       badge.classList.add('hidden');
-      await renderQR(compressed); // ✅ Menggunakan Promise wrapper
+      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+      await QRCode.toCanvas(canvas, compressed, {
+        width: 260, margin: 1, errorCorrectionLevel: 'L'
+      });
       return { chunked: false, compressed };
     } else {
       const chunkSize = 300;
@@ -667,7 +652,10 @@ async function generateSignalQR(canvas, desc, badgeId) {
         const data = JSON.stringify({ i: currentIdx, n: chunks.length, d: chunks[currentIdx] });
         badge.textContent = (currentIdx + 1) + '/' + chunks.length;
         try {
-          await renderQR(data); // ✅ Menggunakan Promise wrapper
+          canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+          await QRCode.toCanvas(canvas, data, {
+            width: 260, margin: 1, errorCorrectionLevel: 'L'
+          });
         } catch (e) {
           console.error('QR gen error', e);
           showToast('Gagal generate QR: data terlalu besar', 'error');
@@ -873,6 +861,9 @@ async function startSendingFlow() {
   }
 });
 
+let sendAnswerChunks = {};
+let sendAnswerTotal = 0;
+
 async function handleScannedAnswer(text) {
   if (!sendScanRunning) return;
   try {
@@ -880,17 +871,24 @@ async function handleScannedAnswer(text) {
     if (text.startsWith('{')) {
       const parsed = JSON.parse(text);
       if (parsed.i !== undefined && parsed.n !== undefined && parsed.d !== undefined) {
-        if (parsed.n === 1) {
-          const json = LZString.decompress(parsed.d);
-          desc = expandDesc(JSON.parse(json));
-        } else {
-          showToast('Answer QR chunked - not expected', 'error');
-          return;
-        }
+        sendAnswerChunks[parsed.i] = parsed.d;
+        sendAnswerTotal = parsed.n;
+        if (Object.keys(sendAnswerChunks).length < sendAnswerTotal) return; // masih nunggu bagian lain
+
+        let full = '';
+        for (let i = 0; i < sendAnswerTotal; i++) full += sendAnswerChunks[i];
+        sendAnswerChunks = {}; sendAnswerTotal = 0;
+
+        const json = LZString.decompress(full);
+        desc = expandDesc(JSON.parse(json));
       } else {
         const json = LZString.decompress(text);
         desc = expandDesc(JSON.parse(json));
       }
+    } else {
+      const json = LZString.decompress(text);
+      desc = expandDesc(JSON.parse(json));
+    }
     } else {
       const json = LZString.decompress(text);
       desc = expandDesc(JSON.parse(json));
