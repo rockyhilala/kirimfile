@@ -889,10 +889,6 @@ async function handleScannedAnswer(text) {
       const json = LZString.decompress(text);
       desc = expandDesc(JSON.parse(json));
     }
-    } else {
-      const json = LZString.decompress(text);
-      desc = expandDesc(JSON.parse(json));
-    }
 
     if (desc.type !== 'answer') {
       showToast('QR tidak valid (bukan answer)', 'error');
